@@ -1,2 +1,3 @@
 .DS_Store
 .idea/
+vista/__pycache__/*

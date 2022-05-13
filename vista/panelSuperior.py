@@ -7,15 +7,12 @@ from functools import partial
 from PIL import ImageTk ,Image
 from tkinter import messagebox, filedialog
 
-
-
-
 """Este panel contiene todos los elementos de """
 def panel_superior(window, directorio_actual):
-    panel = PanedWindow(window, orient=HORIZONTAL) # Creo un panel para almacenar todos los objetos de esta parte de la interfaz.
+    panel = Frame(window) # Creo un panel para almacenar todos los objetos de esta parte de la interfaz.
     etiqueta_titulo(panel) # Pongo el titulo
     menu_opciones(window, panel, directorio_actual) # Pongo el menu de opciones
-    panel.pack(side=TOP,fill=X, padx=75) # Empaco el panel
+    panel.pack(side=TOP,fill=X) # Empaco el panel
 
 '''Esta funcion agrega el titulo al panel superior
 params:
@@ -24,7 +21,7 @@ panel: el panel en el que debe pintarse el titulo
 def etiqueta_titulo(panel):
     titulo = Label(panel, text="Modelo neuronal de Izhikevich") # Creo un label con el titulo.
     titulo.config(font =("Montserrat", 28)) # Configuro el tamanio y la fuente del titulo.
-    titulo.grid(row=1, column=0) #pack(side=LEFT, padx= 200) # Pongo el titulo en el panel.
+    titulo.grid(row=0, column=1, padx=400)  #pack(side=LEFT, padx= 200) # Pongo el titulo en el panel.
 
 '''Esta funcion agrega el menu de opciones para cerrar la aplicacion.
 Las opciones son:
@@ -38,19 +35,19 @@ def menu_opciones(window, panel, directorio_actual):
     cerrar_icon = ImageTk.PhotoImage(cerrar_img) # Creo una imagen de Pillow para el icono de cerrar
     boton_cerrar = Button(panel, image=cerrar_icon, command=partial(cerrar_aplicacion, window)) # Creo el boton de cerrar
     boton_cerrar.image = cerrar_icon # Asigno la imagen al boton cerrar
-    boton_cerrar.grid(row=1, column=3) #pack(side=RIGHT) # Coloco el boton cerrar 
+    boton_cerrar.place(x=1170,y=0) #pack(side=RIGHT) # Coloco el boton cerrar 
     # --- BOTON EXPORTAR ---
     exportar_img = Image.open(directorio_actual.joinpath('assets/exportar.png').absolute()) # Abro la ruta de la imagen de exportar
     exportar_icon = ImageTk.PhotoImage(exportar_img) # Creo una imagen de Pillow para el icono de exportar
     boton_exportar = Button(panel, image=exportar_icon, command=partial(exportar, window, directorio_actual)) # Creo el boton de exportar
     boton_exportar.image = exportar_icon # Asigno la imagen al boton exportar
-    boton_exportar.grid(row=1, column=2) #pack(side=RIGHT) # Coloco el boton exportar
+    boton_exportar.place(x=1140,y=0) #pack(side=RIGHT) # Coloco el boton exportar
     # --- BOTON IMPORTAR --- 
     importar_img = Image.open(directorio_actual.joinpath('assets/importar.png').absolute()) # Abro la ruta de la imagen de importar
     importar_icon = ImageTk.PhotoImage(importar_img) # Creo una imagen de Pillow para el icono de importar
     boton_importar = Button(panel, image=importar_icon, command=partial(importar, window, directorio_actual)) # Creo el boton de importar
     boton_importar.image = importar_icon # Asigno la imagen al boton importar
-    boton_importar.grid(row=1, column=1) #pack(side=RIGHT) # Coloco el boton importar
+    boton_importar.place(x=1110,y=0) #pack(side=RIGHT) # Coloco el boton importar
 
 
 ''' Funcion que es llamada al hacer click en el boton cerrar, pregunta si realmente se desea cerrar o retornar a la aplicacion

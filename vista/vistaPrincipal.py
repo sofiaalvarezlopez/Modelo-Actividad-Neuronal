@@ -1,6 +1,9 @@
 import tkinter as tk
+from tkinter import *
 from turtle import window_width
+from vista.panelIzquierda import panel_izquierda
 from vista.panelSuperior import panel_superior
+from vista.panelPlot import panel_plot
 
 """Esta funcion crea la ventana principal del programa."""
 def ventana_principal(directorioActual):
@@ -10,6 +13,7 @@ def ventana_principal(directorioActual):
     window.geometry("+{}+{}".format(posicion_derecha-500, posicion_abajo-250)) # Centro la ventana
     window.title("Proyecto Final - IBIO 2240") # Titulo de la ventana
     panel_superior(window, directorioActual) # Llamo a la funcion del panel superior y le paso por parametro la ventana
+    panel_izquierda(window)
     window.mainloop()
 
 """Esta funcion retorna las dimensiones de la pantalla para centrar la ventana """
