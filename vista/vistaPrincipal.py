@@ -1,9 +1,6 @@
 import tkinter as tk
-from tkinter import *
-from turtle import window_width
-from vista.panelIzquierda import panel_izquierda
+from vista.panelIzquierda.panelIzquierda import panel_izquierda
 from vista.panelSuperior import panel_superior
-from vista.panelPlot import panel_plot
 
 """Esta funcion crea la ventana principal del programa."""
 def ventana_principal(directorioActual):
