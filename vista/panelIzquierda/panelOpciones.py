@@ -2,7 +2,7 @@ from tkinter import *
 
 def panel_opciones(frame_izquierda):
     frame_opciones = Frame(frame_izquierda, bd = 5, height=250, width=600)
-    frame_opciones.place(x=48,y=352)
+    frame_opciones.place(x=48, y=352)
     checkboxes_metodo_solucion(frame_opciones)
     row_actual = variables(frame_opciones)
     parametros(frame_opciones, row_actual)
@@ -64,7 +64,7 @@ def valores_predefinidos(frame):
     variable.set(vals_predefinidos[0]) # Valor por default
     combo = OptionMenu(frame, variable, *vals_predefinidos)
     combo.grid(row=2, column=3)
-    val_elegido = variable.get()
+    val_elegido = variable
     return val_elegido
 
 

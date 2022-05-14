@@ -20,7 +20,7 @@ def panel_plot(frame_izquierda):
     #limpiar_btn.place(x=350,y=410)
 
 def plot(frame_izquierda):
-    fig = plt.Figure(figsize=(6.75, 4.0)) # figura principal
+    fig = plt.Figure(figsize=(7.0, 4.0)) # figura principal
     plot = fig.add_subplot(1,1,1) # plto principal donde se dibujara todos los datos
     plot.set_xlabel(r'Tiempo (ms)')       # Título del eje x
     plot.set_ylabel(r'Voltaje (mV)')        # Título del eje y
