@@ -4,6 +4,7 @@ import tkinter as tk
 from pathlib import Path
 from matplotlib.backend_bases import key_press_handler
 from tkinter import *               # wild card import para evitar llamar tk cada vez
+from  tkinter import ttk
 
 from tkinter import filedialog      # elegir archivos
 from tkinter import messagebox      # mensaje de cerrar
@@ -83,11 +84,12 @@ class Interfaz:
         self.titulo_metodo_sol.config(font =("Montserrat", 18)) # Configuro el tamanio y la fuente del titulo.
         self.titulo_metodo_sol.grid(row=1, column=1) # Pongo el titulo
         row = 2 # Inicializo una variable con la fila
-        metodos_sol = ['Runge-Kutta 2', 'Runge-Kutta 4', 'Euler Adelante', 'Euler Atrás', 'Euler Modificado'] # Creo un arreglo con los metodos de solucion
+        metodos_sol = ['Runge-Kutta 2','Runge-Kutta 4', 'Euler Adelante', 'Euler Atrás', 'Euler Modificado'] # Creo un arreglo con los metodos de solucion
         self.diccionario_metodos = {}
+
         for metodo in metodos_sol: # Itero sobre todos los metodos de solucion
             self.var = IntVar()
-            self.c = Checkbutton(self.frame_opciones, text=metodo) # Creo cada checkbutton
+            self.c = Checkbutton(self.frame_opciones, text=metodo, variable=self.var) # Creo cada checkbutton
             self.c.config(font=("Montserrat", 14)) # Configuro la fuente
             self.diccionario_metodos[metodo] = self.var
             self.c.grid(row=row, column=1, sticky='w') # Lo empaco
@@ -151,7 +153,7 @@ class Interfaz:
         self.label_izq.grid(row=2, column=1)
         # Control de la corriente
         self.corriente_elegida = DoubleVar()
-        self.slider_estimulacion = Scale(self.frame_estimulacion, command=self.corriente_elegida, from_=-100, to=100, orient=HORIZONTAL, length=400, resolution=0.5)
+        self.slider_estimulacion = Scale(self.frame_estimulacion, command=self.corriente_elegida, from_=-100, to=100, orient=HORIZONTAL, variable=self.corriente_elegida , length=400, resolution=0.5)
         self.slider_estimulacion.config(font =("Montserrat", 14))
         self.slider_estimulacion.grid(row=2, column=2)
         self.slider_estimulacion.focus()
@@ -191,7 +193,7 @@ class Interfaz:
         self.frame_cargar = Frame(self.panel_derecha, bd = 5, height=450, width=600)
         self.frame_cargar.place(x=0,y=280)
         self.boton_cargar = Button(self.frame_cargar, text="Cargar", command=self.cargar_variables)
-        self.boton_cargar.place(x=500, y=300)
+        self.boton_cargar.place(x=500, y=0)
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
 
@@ -230,6 +232,7 @@ class Interfaz:
         carpetaDatos.mkdir(parents=True, exist_ok=True)
         # TODO: Guardar los datos generados. Todavia no se realiza pues la interfaz es un esqueleto.
         # Se realizara en una funcion auxiliar. 
+    
 
     ''' Funcion que abre un dialogo para seleccionar un archivo del cual se cargaran los datos de una ejecucion previa en formato double
     '''
@@ -244,8 +247,88 @@ class Interfaz:
         # se llama a la funcion auxiliar que lee los archivos con la extencion y añade los datos a la grafica
         # TODO: Llamar a la funcion auxiliar para cargar los datos cuando ya los haya. La interfaz es un esqueleto entonces todavia no funciona.
 
+    '''Funcion que carga las variables que actualmente tiene el usuario en la interfaz y muestra una tabla con ello'''
     def cargar_variables(self):
-        pass
+        # Metodos de solucion elegidos por el usuario
+        self.diccionario_todos = {}
+        for metodo in self.diccionario_metodos:
+            self.diccionario_todos[metodo] = int(self.diccionario_metodos[metodo].get()) # Obtener los metodos seleccionados por el usuario
+        # Variables
+        for v in self.diccionario_variables:
+            self.diccionario_todos[v] = int(self.diccionario_variables[v].get()) # Obtener las variables que el usuario tendra en cuenta
+        # Parametros
+        for p in self.dict_parametros_valores:
+            self.diccionario_todos[p] = float(self.dict_parametros_valores[p].get())
+        # Valor predefinido
+        self.diccionario_todos['valor_predefinido_neurona'] = str(self.valorPredefinido.get()) # Obtener el valor predefinido de la neurona
+        # Corriente elegida en el slider 
+        self.diccionario_todos['corriente'] = float(self.corriente_elegida.get()) # Obtener el valor de la corriente 
+        # Obtener los valores de los tiempos de simulacion
+        lista = list(self.diccionario_valores_tiempos) # Obtengo los valores de tiempos
+        for i in range(len(self.diccionario_valores_tiempos)):
+            if i < len(self.diccionario_valores_tiempos) - 1: # Cualquiera de las labels de tiempo 
+                self.diccionario_todos[lista[i]] = self.diccionario_valores_tiempos[lista[i]].get() # Obtengo el valor de los tiempos
+            else:
+                self.diccionario_valores_tiempos[lista[i]].set(self.diccionario_todos['corriente']) # Si es la text box de solo lectura (estimulacion), pongo el valor del slider. 
+        # Crear la funcion I(t) de acuerdo a los parametros dados
+        # Primero, obtengo los parametros de tiempo (inic) y corriente
+        self.t_ini_est, self.t_fini_est, self.t_final = self.diccionario_todos['Tiempo de inicio estimulación'], self.diccionario_todos['Tiempo de fin estimulación'], self.diccionario_todos['Tiempo de simulación']
+        self.I = self.diccionario_todos['corriente'] # Obtengo el valor de la corriente
+        self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 1) # Obtengo el tiempo de estimulacion
+        self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 1) # Obtengo el tiempo antes de la estimulacion
+        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final, 1) # Obtengo el tiempo despues de la estimulacion
+        normal = 0 # Indica si la estimulacion es en el rango de tiempo dado, no al inicio ni al final
+        if 0 < self.t_ini_est < self.t_final and 0 < self.t_fini_est < self.t_final: # Si el tiempo de inicio y fin de la estimulacion esta en el rango
+            I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) + [0]*len(self.t_despues_estimulacion)   # Se ve como una funcion escalon
+        elif float(self.t_ini_est) == float(0): # Si el tiempo de inicio de la estimulacion coincide con el de la simulacionn
+            I_t = [self.I]*len(self.t_estimulacion) + [0]*len(self.t_despues_estimulacion) # Empieza estimulada, termina no estimulada
+            normal = 1 # La estimulacion es al inicio
+        elif float(0) == self.t_ini_est and self.t_fini_est == self.t_final:
+            I_t = [self.I]*len(self.t_estimulacion)
+            normal = 3 # La estimulacion dura toda la simulacion
+        elif float(self.t_fini_est) == float(self.t_final): # Si el tiempo de fin de la estimulacion coincide con el final de la simulacion
+            I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) # Empieza no estimulada, termina estimulada
+            normal = 2 # La estimulacion es al final
+        else: # En el caso por defecto, asumo que no se quiere estimulacion sobre la neurona
+            I_t = [0]*len(np.arange(0, self.t_final, 1)) # Dejo la corriente en 0
+        self.diccionario_todos['I_t'] = I_t # Almaceno mi arreglo de corriente 
+        # Crear la tablita con los datos ingresados
+        total_filas = 3 if normal else 2 # Numero de filas
+        total_columnas = 3 # Numero de columnas
+        # Pongo el heading
+        self.tabla = ttk.Treeview(self.frame_cargar)
+        self.tabla['columns'] = ('T inicial (ms)', 'T final (ms)', 'Estimulación (mA)')
+        self.tabla.column("#0", width=0,  stretch=NO)
+        self.tabla.column('T inicial (ms)',anchor=CENTER, width=120)
+        self.tabla.column('T final (ms)',anchor=CENTER, width=120)
+        self.tabla.column('Estimulación (mA)',anchor=CENTER, width=120)
+
+        self.tabla.heading("#0",text="",anchor=CENTER)
+        self.tabla.heading('T inicial (ms)',text='T inicial (ms)', anchor=CENTER)
+        self.tabla.heading('T final (ms)',text='T final (ms)', anchor=CENTER)
+        self.tabla.heading('Estimulación (mA)',text='Estimulación (mA)', anchor=CENTER)
+
+        # Ahora, verifico si es normal la estimulacion o no y con ello, pongo los cuadritos de la tabla e inserto las filas
+        if normal == 0: # La estimulacion ocurre en el rango dado, no al inicio ni al final
+            self.tabla.insert(parent='',index='end',iid=0,text='',values=(0, self.t_ini_est, 0))
+            self.tabla.insert(parent='',index='end',iid=1,text='',values=(self.t_ini_est, self.t_fini_est, self.I))
+            self.tabla.insert(parent='',index='end',iid=2,text='',values=(self.t_fini_est, self.t_final, 0))
+        elif normal == 1: # La estimulacion ocurre al inicio
+            self.tabla.insert(parent='',index='end',iid=3,text='',values=(self.t_ini_est, self.t_fini_est, self.I))
+            self.tabla.insert(parent='',index='end',iid=4,text='',values=(self.t_fini_est, self.t_final,0))
+        elif normal == 2: # La estimulacion ocurre al final
+            self.tabla.insert(parent='',index='end',iid=5,text='',values=(0, self.t_ini_est, 0))
+            self.tabla.insert(parent='',index='end',iid=6,text='',values=(self.t_ini_est, self.t_final, self.I))
+        else: # La estimulacion dura toda la simulacion
+            self.tabla.insert(parent='',index='end',iid=7,text='',values=(self.t_ini_est, self.t_final, self.I))
+        self.tabla.place(x=100, y=80)
+        print(self.diccionario_todos)
+
+        return self.diccionario_todos
+
+
+
+
 
     def iniciar(self):
         ''' Metodo que inicia la interfaz con el main loop, este metodo se define por tener orden en toda la clase y no hacer accesos externos al parametro de ventana
@@ -268,6 +351,11 @@ def obtener_dimensiones(window):
 if __name__ == '__main__':
     directorioActual = Path(__file__).parent
     window = tk.Tk() # Inicializo la app.
+    style = ttk.Style(window)
+    # set ttk theme to "clam" which support the fieldbackground option
+    #style.theme_use("clam")
+    style.configure("Treeview", background="system", 
+                fieldbackground="system")
     window.geometry("1200x700") # Inicializo el tamanio de la ventana.
     window.title("Proyecto final IBIO 2240: Modelo neuronal de Izhikevich")
     window.resizable(False, False) # Hace que no se pueda cambiar el tamanio de la ventana
@@ -275,5 +363,6 @@ if __name__ == '__main__':
     window.geometry("+{}+{}".format(posicion_derecha-500, posicion_abajo-250)) # Centro la ventana
     app = Interfaz(window) # Genero el objeto interfaz
     app.iniciar() # Corro la interfaz
+    
 
 
