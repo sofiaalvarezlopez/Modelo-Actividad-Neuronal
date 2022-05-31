@@ -191,7 +191,7 @@ class Interfaz:
         self.frame_cargar = Frame(self.panel_derecha, bd = 5, height=450, width=600)
         self.frame_cargar.place(x=0,y=280)
         self.boton_cargar = Button(self.frame_cargar, text="Cargar", command=self.cargar_variables)
-        self.boton_cargar.place(x=500, y=0)
+        self.boton_cargar.place(x=500, y=300)
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
 
