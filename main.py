@@ -342,10 +342,6 @@ class Interfaz:
 
         return self.diccionario_todos
 
-
-
-
-
     def iniciar(self):
         ''' Metodo que inicia la interfaz con el main loop, este metodo se define por tener orden en toda la clase y no hacer accesos externos al parametro de ventana
         '''

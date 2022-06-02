@@ -31,12 +31,16 @@ class Interfaz:
         self.directorio_actual = Path(__file__).parent
         # =================== Lista de ejecuciones de cada algoritmo para guardar ==========================
         # guardo tuplas de los listados de x y y de la ejecucion de cada algoritmo mientras no se limpie la grafica
-        self.eForSet = []
-        self.eBackSet = []
-        self.eModSet = []
-        self.RK2Set = []
-        self.RK4Set = []
-        self.scipySet = []
+        self.eForSetV = []
+        self.eForSetU = []
+        self.eBackSetV = []
+        self.eBackSetU = []
+        self.eModSetV = []
+        self.eModSetU = []
+        self.RK2SetV = []
+        self.RK2SetU = []
+        self.RK4SetV = []
+        self.RK4SetU = []
         # Colores definidos para las graficas
         self.color_efor = 'red'
         self.color_eback = '#fbb901'
@@ -226,7 +230,9 @@ class Interfaz:
     def exportar(self):
         ahora = time() # obtengo el timestamp actual
         fecha = dt.datetime.utcfromtimestamp(ahora).strftime("%Y-%m-%d_%H-%M-%S") # genero la fecha actual con el time stamp obtenido previamente
-        nombre_carpeta = 'Datos_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+        nombre_carpeta_v = 'Datos_V_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+        nombre_carpeta_u = 'Datos_U_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+
         # pido el directorio donde se creara la carpeta en la que se guardaran los datos
         nombre_directorio = filedialog.askdirectory(parent = self.window,initialdir=self.directorio_actual,title="Directorio de guardado de datos") 
         # si el directorio es vacio quiere decir que se cerro la ventana sin escojer por lo que la funcion no hara nada y se retorna
@@ -235,10 +241,44 @@ class Interfaz:
         # si hay algo en el directorio se procede a crear una clase path con el parametro obtenido en el dialog para asi manejar de manera mas simple el path
         directorio_datos = Path(nombre_directorio)
         # se crea el path a la carpeta nueva con el nombre previamente generaro y se manda el comando al sistema para que la cree como carpeta
-        carpetaDatos = directorio_datos.joinpath(str(nombre_carpeta))
-        carpetaDatos.mkdir(parents=True, exist_ok=True)
-        # TODO: Guardar los datos generados. Todavia no se realiza pues la interfaz es un esqueleto.
-        # Se realizara en una funcion auxiliar. 
+        carpeta_datos_v = directorio_datos.joinpath(str(nombre_carpeta_v))
+        carpeta_datos_v.mkdir(parents=True, exist_ok=True)
+        carpeta_datos_u = directorio_datos.joinpath(str(nombre_carpeta_u))
+        carpeta_datos_u.mkdir(parents=True, exist_ok=True)
+        # Se realizara en una funcion auxiliar el almacenado de datos de las graficas:
+        if self.diccionario_todos['V(t)']:
+            self.aux_exportar_metodo(carpeta_datos_v, '.efor_v', self.eForSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.eback_v', self.eBackSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.emod_v', self.eModSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.rk2_v', self.RK2SetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.rk4_v', self.RK4SetV)
+        if self.diccionario_todos['u(t)']:
+            self.aux_exportar_metodo(carpeta_datos_u, '.efor_u', self.eForSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.eback_u', self.eBackSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.emod_u', self.eModSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.rk2_u', self.RK2SetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.rk4_u', self.RK4SetU)
+
+
+    def aux_exportar_metodo(self, directorio, extension, listaDatos):
+        ''' Metodo auxiliar que ayudara al guardado de archivos, es definido para evitar redundacia en codigo
+        '''         
+        # genero un proceso iterativo para leer todas las lineas graficadas en el listado de datos el cual tiene en cada posicion un conjunto (X,Y)
+        for i,val in enumerate(listaDatos):
+            # obtengo el listado de datos de X 
+            x_data = val[0]
+            # obtengo el listado de datos deY
+            y_data = val[1]
+            # las empaqueto en formatodouble
+            x_packed = st.pack('d'*len(x_data),*x_data)
+            y_packed = st.pack('d'*len(y_data),*y_data)
+            # creo el archivo con el nombre i.extencion para hacer la lectura despues de forma facil ejemplo 0.efor
+            with open(directorio.joinpath(str(i)+extension).absolute(),'ab') as f:
+                # escribo los datos de X en el archivo
+                f.write(x_packed)
+                # escribo los datos de Y en el archivo
+                f.write(y_packed)
+                # Nota: el orden es importante ya que en la lectura se obtendra un set completo por lo que la primera mitad sera X y la segunda mitad sera Y
     
 
     ''' Funcion que abre un dialogo para seleccionar un archivo del cual se cargaran los datos de una ejecucion previa en formato double
@@ -252,7 +292,61 @@ class Interfaz:
         # si hay algo en el directorio se procede a crear una clase path con el parametro obtenido en el dialog para asi manejar de manera mas simple el path
         directorio_datos = Path(nombre_directorio)
         # se llama a la funcion auxiliar que lee los archivos con la extencion y añade los datos a la grafica
-        # TODO: Llamar a la funcion auxiliar para cargar los datos cuando ya los haya. La interfaz es un esqueleto entonces todavia no funciona.
+        tmpSetEforV = self.aux_importar(directorio_datos,'.efor_v', self.color_efor)
+        tmpSetEbackV = self.aux_importar(directorio_datos,'.eback_v', self.color_eback)
+        tmpSetEmodV = self.aux_importar(directorio_datos,'.emod_v', self.color_emod)
+        tmpSetRK2V = self.aux_importar(directorio_datos,'.rk2_v', self.color_rk2)
+        tmpSetRK4V = self.aux_importar(directorio_datos,'.rk4_v',self.color_rk4)
+
+        tmpSetEforU = self.aux_importar(directorio_datos,'.efor_u', self.color_efor)
+        tmpSetEbackU = self.aux_importar(directorio_datos,'.eback_u', self.color_eback)
+        tmpSetEmodU = self.aux_importar(directorio_datos,'.emod_u', self.color_emod)
+        tmpSetRK2U = self.aux_importar(directorio_datos,'.rk2_u', self.color_rk2)
+        tmpSetRK4U = self.aux_importar(directorio_datos,'.rk4_u',self.color_rk4)
+        # agrego los datos cargados a los existentes en las listas que almacenan estos para la persistencia
+        self.eForSetV +=tmpSetEforV
+        self.eBackSetV+=tmpSetEbackV
+        self.eModSetV+=tmpSetEmodV
+        self.RK2SetV+=tmpSetRK2V
+        self.RK4SetV+=tmpSetRK4V
+
+        self.eForSetU +=tmpSetEforU
+        self.eBackSetU+=tmpSetEbackU
+        self.eModSetU+=tmpSetEmodU
+        self.RK2SetU+=tmpSetRK2U
+        self.RK4SetU+=tmpSetRK4U
+        # Dibujo en la grafica
+        self.imagen_grafica.draw()
+
+
+
+    def aux_importar(self, directorio, extension, color_grafica):
+        ''' Metodo auxiliar que ayudara a la carga de archivos, es definido para evitar redundacia en codigo
+        retorna una lista con los valores leidos de X y Y de los archivos que encuentre en el path especificado con la extencion especificada
+        '''
+        # obtengo el nombre de todos los archivos con la extension deseada
+        ext = '*'+extension
+        files = [f.absolute() for f in directorio.glob(ext) if f.is_file()]
+        tmpSet = [] # variable donde se guardaran los conjuntos
+        # proceso iterativo que lee cada archivo
+        for tmpF in files:
+            with open(tmpF,'rb') as f:
+                # leo el contenido del archivo
+                data = f.read()
+                # desempaqueto el contenido del arvhivo y lo convierto en lista para manipularlo
+                unpacked = list(st.unpack('d'*(len(data)//8),data))
+                # obtengo la mitad del tamaño para poder partir el array
+                tam = len(unpacked)//2
+                # genero los valores de X con la mitad de los datos y lo vuelvo un array de numpy
+                t = np.array(unpacked[:tam])
+                # genero los valores de Y con la segunda mitad de los datos y lo vuelvo un array de numpy
+                V = np.array(unpacked[tam:])
+                # grafico la linea con el color que debe ir
+                self.plot.plot(t,V,color=color_grafica)
+                # guardo los valore de X y Y en la lista temporal que se retornara al final de este metodo
+                tmpSet.append((t,V))
+        # retorno la lista resultante de la lectura de los archivos con la extencion
+        return tmpSet
 
     '''Funcion que carga las variables que actualmente tiene el usuario en la interfaz y muestra una tabla con ello'''
     def cargar_variables(self):
@@ -332,6 +426,7 @@ class Interfaz:
         self.metodoSolucion()
         return self.diccionario_todos
 
+    """Metodo que se encarga de mostrar las graficas de las checkboxes de metodos seleccionadas"""
     def metodoSolucion(self):
         if self.diccionario_todos['Euler Adelante']:
             self.llamadoEulerFor()
@@ -352,13 +447,14 @@ class Interfaz:
         a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
         T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
         t_eFor, V_eFor, U_eFor = EulerFor(a, b, c, d, T0, TF, I)
-        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
-        # TODO: self.eForSet.append((t_eFor,V_eFor))
         # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
         if self.diccionario_todos['V(t)']:
             self.plot.plot(t_eFor, V_eFor,color=self.color_efor)
-        else: 
+            # Lo agrego para persistir
+            self.eForSetV.append((t_eFor,V_eFor))
+        if self.diccionario_todos['u(t)']: 
             self.plot.plot(t_eFor, U_eFor,color=self.color_efor)
+            self.eForSetU.append((t_eFor,U_eFor))
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
     
@@ -370,12 +466,13 @@ class Interfaz:
         T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
         t_eFor, V_eFor, U_eFor = Eulerback(a, b, c, d, T0, TF, I)
         # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
-        # TODO: self.eForSet.append((t_eFor,V_eFor))
         # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
         if self.diccionario_todos['V(t)']:
             self.plot.plot(t_eFor, V_eFor,color=self.color_eback)
-        else: 
+            self.eBackSetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
             self.plot.plot(t_eFor, U_eFor,color=self.color_eback)
+            self.eBackSetU.append((t_eFor, V_eFor))
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
 
@@ -387,12 +484,14 @@ class Interfaz:
         T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
         t_eFor, V_eFor, U_eFor = Eulermod(a, b, c, d, T0, TF, I)
         # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
-        # TODO: self.eForSet.append((t_eFor,V_eFor))
         # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
         if self.diccionario_todos['V(t)']:
             self.plot.plot(t_eFor, V_eFor,color=self.color_emod)
-        else: 
+            self.eModSetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
             self.plot.plot(t_eFor, U_eFor,color=self.color_emod)
+            self.eModSetU.append((t_eFor, V_eFor))
+
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
 
@@ -408,8 +507,11 @@ class Interfaz:
         # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
         if self.diccionario_todos['V(t)']:
             self.plot.plot(t_eFor, V_eFor,color=self.color_rk2)
-        else: 
+            self.RK2SetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
             self.plot.plot(t_eFor, U_eFor,color=self.color_rk2)
+            self.RK2SetU.append((t_eFor, U_eFor))
+
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
 
@@ -421,19 +523,15 @@ class Interfaz:
         T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
         t_eFor, V_eFor, U_eFor = rungekutta4(a, b, c, d, T0, TF, I)
         # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
-        # TODO: self.eForSet.append((t_eFor,V_eFor))
         # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
         if self.diccionario_todos['V(t)']:
             self.plot.plot(t_eFor, V_eFor,color=self.color_rk4)
-        else: 
+            self.RK4SetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
             self.plot.plot(t_eFor, U_eFor,color=self.color_rk4)
+            self.RK4SetU.append((t_eFor, V_eFor))
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
-
-
-
-
-
 
     def iniciar(self):
         ''' Metodo que inicia la interfaz con el main loop, este metodo se define por tener orden en toda la clase y no hacer accesos externos al parametro de ventana
