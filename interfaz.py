@@ -240,7 +240,7 @@ class Interfaz:
             self.dict_parametros_valores['b'].set(0.2)
             self.dict_parametros_valores['c'].set(-65)
             self.dict_parametros_valores['d'].set(2)
-        elif eleccion == "Talamo-Cortical":
+        elif eleccion == "Talamo-cortical":
             self.dict_parametros_valores['a'].set(0.02)
             self.dict_parametros_valores['b'].set(0.25)
             self.dict_parametros_valores['c'].set(-65)
@@ -482,7 +482,6 @@ class Interfaz:
         else: # La estimulacion dura toda la simulacion
             self.tabla.insert(parent='',index='end',iid=7,text='',values=(self.t_ini_est, self.t_final, self.I))
         self.tabla.place(x=100, y=80)
-        self.metodoSolucion()
         # Creo una tabla para mostrar el codigo de colores
         self.tabla_colores = ttk.Treeview(self.frame_cargar)
         self.tabla_colores['columns'] = ('Color', 'Método')
@@ -503,8 +502,8 @@ class Interfaz:
 
         self.tabla_colores.place(x=120, y=180)
 
-
-
+        # Llamar a los metodos de solucion
+        self.metodoSolucion()
 
 
         return self.diccionario_todos
