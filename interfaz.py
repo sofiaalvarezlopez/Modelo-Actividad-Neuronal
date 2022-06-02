@@ -147,8 +147,10 @@ class Interfaz:
         vals_predefinidos = ["Regular spiking","Intrinsic bursting","Chattering","Fast spiking","Talamo-cortical","Resonador"]
         self.valorPredefinido = StringVar(self.frame_opciones)
         self.valorPredefinido.set(vals_predefinidos[0]) # Valor por default
-        self.comboValorPredefinido = OptionMenu(self.frame_opciones, self.valorPredefinido, *vals_predefinidos)
+        self.comboValorPredefinido = OptionMenu(self.frame_opciones, self.valorPredefinido, *vals_predefinidos, command=self.actualizar)
         self.comboValorPredefinido.grid(row=2, column=3)
+        # Poner como valores predefinidos los de las constantes
+        self.actualizar(self.valorPredefinido)
 
         # --- EMPACAR EL PANEL ---
         self.panel_izquierda.pack(side=LEFT,fill=Y) # Empaco el panel
@@ -215,6 +217,39 @@ class Interfaz:
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
 
     # ======================================= FUNCIONES DE APOYO ===========================================
+    """Funcion que actualiza los parametros de a,b,c,d basado en la neurona elegida"""
+    def actualizar(self, eleccion):
+        if eleccion == "Regular spiking":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(4)
+        elif eleccion == "Intrinsic bursting":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-55)
+            self.dict_parametros_valores['d'].set(4)
+        elif eleccion == "Chattering":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-50)
+            self.dict_parametros_valores['d'].set(2)
+        elif eleccion == "Fast spiking":
+            self.dict_parametros_valores['a'].set(0.1)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(2)
+        elif eleccion == "Talamo-Cortical":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.25)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(0.05)
+        else:
+            self.dict_parametros_valores['a'].set(0.1)
+            self.dict_parametros_valores['b'].set(0.25)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(0.05)
+
     ''' Funcion que es llamada al hacer click en el boton cerrar, pregunta si realmente se desea cerrar o retornar a la aplicacion
         '''
     def cerrar_aplicacion(self):
