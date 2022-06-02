@@ -207,6 +207,10 @@ class Interfaz:
         self.frame_cargar.place(x=0,y=280)
         self.boton_cargar = Button(self.frame_cargar, text="Cargar", command=self.cargar_variables)
         self.boton_cargar.place(x=500, y=0)
+        self.boton_limpiar = Button(master=self.frame_cargar, text="Limpiar gráfica",  command = self.limpiar_grafica)
+        self.boton_limpiar.place(x=350, y=0)
+
+
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
 
@@ -318,8 +322,6 @@ class Interfaz:
         # Dibujo en la grafica
         self.imagen_grafica.draw()
 
-
-
     def aux_importar(self, directorio, extension, color_grafica):
         ''' Metodo auxiliar que ayudara a la carga de archivos, es definido para evitar redundacia en codigo
         retorna una lista con los valores leidos de X y Y de los archivos que encuentre en el path especificado con la extencion especificada
@@ -347,6 +349,29 @@ class Interfaz:
                 tmpSet.append((t,V))
         # retorno la lista resultante de la lectura de los archivos con la extencion
         return tmpSet
+
+    def limpiar_grafica(self):
+        ''' Funcion que limpia las grafica y las listas donde se guardan los datos para los metodos de persistencia
+        '''
+        self.plot.cla() # lipio toda la grafica, esto elimina incluso los titulos por lo que debo volver a ponerlos despues de esto                                                        # Define que las fuentes usadas en el gráfico son serifadas.
+        self.plot.set_xlabel(r'Tiempo (ms)')       # Título del eje x
+        self.plot.set_ylabel(r'Voltaje (mV)')        # Título del eje y
+        self.plot.grid(1) # Activo la grilla
+        self.imagen_grafica.draw()                                                              # Una vez agregado todo dibujo la grafica en la interfaz
+        # vuelvo a poner el valor vacio en las listas que guardan los datos para los metodos de persistencia
+        self.eForSetV = []
+        self.eBackSetV = []
+        self.eModSetV = []
+        self.RK2SetV = []
+        self.RK4SetV = []
+        self.scipySetV = []
+
+        self.eForSetU = []
+        self.eBackSetU = []
+        self.eModSetU = []
+        self.RK2SetU = []
+        self.RK4SetU = []
+        self.scipySetU = []
 
     '''Funcion que carga las variables que actualmente tiene el usuario en la interfaz y muestra una tabla con ello'''
     def cargar_variables(self):
