@@ -47,7 +47,6 @@ class Interfaz:
         self.color_emod = 'darkgreen'
         self.color_rk2 = 'blue'
         self.color_rk4 = 'purple'
-        self.color_scipy = 'black'
 
         # ======================================= PANEL SUPERIOR ===========================================
         self.panel_superior = Frame(self.window)
@@ -456,8 +455,6 @@ class Interfaz:
             I_t = [0]*len(np.arange(0, self.t_final, 0.01)) # Dejo la corriente en 0
         self.diccionario_todos['I_t'] = I_t # Almaceno mi arreglo de corriente 
         # Crear la tablita con los datos ingresados
-        total_filas = 3 if normal else 2 # Numero de filas
-        total_columnas = 3 # Numero de columnas
         # Pongo el heading
         self.tabla = ttk.Treeview(self.frame_cargar)
         self.tabla['columns'] = ('T inicial (ms)', 'T final (ms)', 'Estimulación (mA)')
@@ -486,6 +483,30 @@ class Interfaz:
             self.tabla.insert(parent='',index='end',iid=7,text='',values=(self.t_ini_est, self.t_final, self.I))
         self.tabla.place(x=100, y=80)
         self.metodoSolucion()
+        # Creo una tabla para mostrar el codigo de colores
+        self.tabla_colores = ttk.Treeview(self.frame_cargar)
+        self.tabla_colores['columns'] = ('Color', 'Método')
+
+        self.tabla_colores.column("#0", width=0,  stretch=NO)
+        self.tabla_colores.column('Color',anchor=CENTER, width=120)
+        self.tabla_colores.column('Método',anchor=CENTER, width=150)
+
+        self.tabla_colores.heading("#0",text="",anchor=CENTER)
+        self.tabla_colores.heading('Color',text='Color', anchor=CENTER)
+        self.tabla_colores.heading('Método',text='Método', anchor=CENTER)
+
+        self.tabla_colores.insert(parent='',index='end',iid=0,text='',values=('Rojo', 'Euler hacia adelante'))
+        self.tabla_colores.insert(parent='',index='end',iid=1,text='',values=('Amarillo', 'Euler hacia atrás'))
+        self.tabla_colores.insert(parent='',index='end',iid=2,text='',values=('Verde', 'Euler modificado'))
+        self.tabla_colores.insert(parent='',index='end',iid=3,text='',values=('Azul', 'Runge-Kutta 2'))
+        self.tabla_colores.insert(parent='',index='end',iid=4,text='',values=('Morado', 'Runge-Kutta 4'))
+
+        self.tabla_colores.place(x=120, y=180)
+
+
+
+
+
         return self.diccionario_todos
 
     """Metodo que se encarga de mostrar las graficas de las checkboxes de metodos seleccionadas"""
@@ -633,3 +654,4 @@ if __name__ == '__main__':
     
 
 
+ 
