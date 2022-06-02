@@ -215,6 +215,8 @@ class Interfaz:
 
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
+        # Mensaje de bienvenida
+        messagebox.showinfo('¡Bienvenido!','Este proyecto, de la clase IBIO 2240, pretende modelar la actividad neuronal')
 
     # ======================================= FUNCIONES DE APOYO ===========================================
     """Funcion que actualiza los parametros de a,b,c,d basado en la neurona elegida"""
@@ -599,6 +601,7 @@ class Interfaz:
         self.window.mainloop()
 
 
+
 """Esta funcion retorna las dimensiones de la pantalla para centrar la ventana """
 def obtener_dimensiones(window):
     window_width = window.winfo_reqwidth() # Obtener el ancho
@@ -626,6 +629,7 @@ if __name__ == '__main__':
     window.geometry("+{}+{}".format(posicion_derecha-500, posicion_abajo-250)) # Centro la ventana
     app = Interfaz(window) # Genero el objeto interfaz
     app.iniciar() # Corro la interfaz
+    
     
 
 
