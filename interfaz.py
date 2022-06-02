@@ -283,7 +283,7 @@ class Interfaz:
         self.I = self.diccionario_todos['corriente'] # Obtengo el valor de la corriente
         self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 0.01) # Obtengo el tiempo de estimulacion
         self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 0.01) # Obtengo el tiempo antes de la estimulacion
-        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final, 0.01) # Obtengo el tiempo despues de la estimulacion
+        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final + 0.01, 0.01) # Obtengo el tiempo despues de la estimulacion
         normal = 0 # Indica si la estimulacion es en el rango de tiempo dado, no al inicio ni al final
         if 0 < self.t_ini_est < self.t_final and 0 < self.t_fini_est < self.t_final: # Si el tiempo de inicio y fin de la estimulacion esta en el rango
             I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) + [0]*len(self.t_despues_estimulacion)   # Se ve como una funcion escalon
@@ -297,7 +297,7 @@ class Interfaz:
             I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) # Empieza no estimulada, termina estimulada
             normal = 2 # La estimulacion es al final
         else: # En el caso por defecto, asumo que no se quiere estimulacion sobre la neurona
-            I_t = [0]*len(np.arange(0, self.t_final, 1)) # Dejo la corriente en 0
+            I_t = [0]*len(np.arange(0, self.t_final, 0.01)) # Dejo la corriente en 0
         self.diccionario_todos['I_t'] = I_t # Almaceno mi arreglo de corriente 
         # Crear la tablita con los datos ingresados
         total_filas = 3 if normal else 2 # Numero de filas
@@ -335,6 +335,15 @@ class Interfaz:
     def metodoSolucion(self):
         if self.diccionario_todos['Euler Adelante']:
             self.llamadoEulerFor()
+        if self.diccionario_todos['Euler Atrás']:
+            self.llamadoEulerBack()
+        if self.diccionario_todos['Euler Modificado']:
+            self.llamadoEulerModificado()
+        if self.diccionario_todos['Runge-Kutta 2']:
+            self.llamadoRungeKutta2()
+        if self.diccionario_todos['Runge-Kutta 4']:
+            self.llamadoRungeKutta4()
+            
 
     def llamadoEulerFor(self):
         ''' Metodo que llamara la funcion definida en la logica para el metodo euler forward con los parametros que tenga la interfaz en este momento
@@ -352,6 +361,75 @@ class Interfaz:
             self.plot.plot(t_eFor, U_eFor,color=self.color_efor)
         # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
         self.imagen_grafica.draw()
+    
+    def llamadoEulerBack(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler back con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = Eulerback(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_eback)
+        else: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_eback)
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoEulerModificado(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler modificado con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = Eulermod(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_emod)
+        else: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_emod)
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoRungeKutta2(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo Runge-Kutta 2 con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = rungekutta2(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_rk2)
+        else: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_rk2)
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoRungeKutta4(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo Runge-Kutta 4 con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = rungekutta4(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_rk4)
+        else: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_rk4)
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
 
 
 

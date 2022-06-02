@@ -25,16 +25,16 @@ def EulerFor(a, b, c, d, T0, TF, I, h=0.01):
     
     return T, v, u
 
-def Eulerback(a, b, c, d, h, T0, TF): 
+def Eulerback(a, b, c, d, T0, TF, I, h=0.01): 
     
-    def V_EulerBack(v, u, I, h):
+    def V_EulerBack(v, u, I_actual, h=0.01):
         a_c = -0.04 * h
         b_c = 1 - 5 * h
-        c_c = - (v + h*(140 - u + I))
+        c_c = - (v + h*(140 - u + I_actual))
         
         return (-b_c + np.sqrt(b_c**2 - 4*a_c*c_c))/(2*a_c)
 
-    def U_EulerBack(v, u, h):
+    def U_EulerBack(v, u, h=0.01):
         return (u + h * a * b * v) / (1 + h * a)
 
     T = np.arange(T0, TF + h, h)
@@ -42,45 +42,25 @@ def Eulerback(a, b, c, d, h, T0, TF):
     v[0] = -65
     u = np.zeros(len(T))
     u[0] = -14
-
-    def FunI(t):
-        if (t >= 200) and (t <= 700):
-            return 10
-        else:
-            return 0
-
-    I = []
-    for i in T:
-        I.append(FunI(i))
-
-
+    print(len(T))
+    print(len(I))
     for iter in range(1, len(T)):
         if(v[iter-1] >= 30):
             v[iter] = c
             u[iter] = u[iter-1] + d
         else:
-            v[iter] = V_EulerBack(v[iter - 1], u[iter - 1], I[iter], h)
-            u[iter] = U_EulerBack(v[iter - 1], u[iter - 1], h)
+            v[iter] = V_EulerBack(v[iter - 1], u[iter - 1], I[iter], h=0.01)
+            u[iter] = U_EulerBack(v[iter - 1], u[iter - 1], h=0.01)
     
     return T, v, u
 
-def Eulermod(dvdt, dudt, a, b, c, d, h, T0, TF):
+def Eulermod(a, b, c, d, T0, TF, I, h=0.01):
     
     T = np.arange(T0, TF + h, h)
     v = np.zeros(len(T))
     v[0] = -65
     u = np.zeros(len(T))
     u[0] = b*v[0]
-    
-    def FunI(t):
-        if (t >= 200) and (t <= 700):
-            return 10
-        else:
-            return 0
-
-    I = []
-    for i in T:
-        I.append(FunI(i))
 
     for iter in range(1, len(T)):
 
@@ -90,38 +70,25 @@ def Eulermod(dvdt, dudt, a, b, c, d, h, T0, TF):
 
         else:
 
-            v[iter] = v[iter - 1] + ((h/2)*(dvdt(v[iter-1], u[iter-1], I[iter-1])) + dvdt(v[iter - 1] + h*v[iter - 1], u[iter-1] + h*u[iter - 1], I[iter-1]))
-            u[iter] = u[iter-1] + ((h/2)*(dudt(v[iter - 1], u[iter - 1],a,b) + dudt(v[iter-1] + h*v[iter - 1],u[iter -1] + h*u[iter - 1], a, b)))  
+            v[iter] = v[iter - 1] + ((h/2)*((dvdt(v[iter-1], u[iter-1], I[iter-1])) + dvdt(v[iter - 1] + h*v[iter - 1], u[iter-1] + h*u[iter - 1], I[iter-1])))
+            u[iter] = u[iter-1] + ((h/2)*((dudt(v[iter - 1], u[iter - 1],a,b) + dudt(v[iter-1] + h*v[iter - 1],u[iter -1] + h*u[iter - 1], a, b))))  
     
     return T, v, u
 
-def rungekutta2(dvdt, dudt, a, b, c, d, h, T0, TF): 
+def rungekutta2(a, b, c, d, T0, TF, I, h=0.01): 
     T = np.arange(T0, TF + h, h)
     v = np.zeros(len(T))
     v[0] = -65
     u = np.zeros(len(T))
     u[0] = b*v[0]
 
-    def FunI(t):
-        if (t >= 200) and (t <= 700):
-            return 10
-        else:
-            return 0
-
-    I = []
-    for i in T:
-        I.append(FunI(i))
-
     for iter in range(1, len(T)):
 
         if(v[iter-1] >= 30):
-
             v[iter] = c
-
             u[iter] = u[iter-1] + d
 
         else:
-
             kv1 = dvdt(v[iter - 1], u[iter - 1], I[iter- 1])
             ku1 = dudt(v[iter - 1], u[iter - 1], a, b)
             kv2 = dvdt(v[iter - 1] + (1/2*kv1*h), u[iter - 1] + (1/2*ku1*h), I[iter- 1])
@@ -132,22 +99,12 @@ def rungekutta2(dvdt, dudt, a, b, c, d, h, T0, TF):
     
     return T, v, u 
 
-def rungekutta4(dvdt, dudt, a, b, c, d, h, T0, TF): 
+def rungekutta4(a, b, c, d, T0, TF, I, h=0.01): 
     T = np.arange(T0, TF + h, h)
     v = np.zeros(len(T))
     v[0] = -65
     u = np.zeros(len(T))
     u[0] = b*v[0]
-    
-    def FunI(t):
-        if (t >= 200) and (t <= 700):
-            return 10
-        else:
-            return 0
-
-    I = []
-    for i in T:
-        I.append(FunI(i))
 
     for iter in range(1,len(T)):
         if(v[iter-1] >= 30):
