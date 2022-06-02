@@ -5,6 +5,7 @@ from pathlib import Path
 from matplotlib.backend_bases import key_press_handler
 from tkinter import *               # wild card import para evitar llamar tk cada vez
 from  tkinter import ttk
+from logica import *
 
 from tkinter import filedialog      # elegir archivos
 from tkinter import messagebox      # mensaje de cerrar
@@ -30,12 +31,24 @@ class Interfaz:
         self.directorio_actual = Path(__file__).parent
         # =================== Lista de ejecuciones de cada algoritmo para guardar ==========================
         # guardo tuplas de los listados de x y y de la ejecucion de cada algoritmo mientras no se limpie la grafica
-        self.eForSet = []
-        self.eBackSet = []
-        self.eModSet = []
-        self.RK2Set = []
-        self.RK4Set = []
-        self.scipySet = []
+        self.eForSetV = []
+        self.eForSetU = []
+        self.eBackSetV = []
+        self.eBackSetU = []
+        self.eModSetV = []
+        self.eModSetU = []
+        self.RK2SetV = []
+        self.RK2SetU = []
+        self.RK4SetV = []
+        self.RK4SetU = []
+        # Colores definidos para las graficas
+        self.color_efor = 'red'
+        self.color_eback = '#fbb901'
+        self.color_emod = 'darkgreen'
+        self.color_rk2 = 'blue'
+        self.color_rk4 = 'purple'
+        self.color_scipy = 'black'
+
         # ======================================= PANEL SUPERIOR ===========================================
         self.panel_superior = Frame(self.window)
         titulo = Label(self.panel_superior, text="Modelo neuronal de Izhikevich") # Creo un label con el titulo.
@@ -84,7 +97,7 @@ class Interfaz:
         self.titulo_metodo_sol.config(font =("Montserrat", 18)) # Configuro el tamanio y la fuente del titulo.
         self.titulo_metodo_sol.grid(row=1, column=1) # Pongo el titulo
         row = 2 # Inicializo una variable con la fila
-        metodos_sol = ['Runge-Kutta 4', 'Euler Adelante', 'Euler Atrás', 'Euler Modificado'] # Creo un arreglo con los metodos de solucion
+        metodos_sol = ['Runge-Kutta 2','Runge-Kutta 4', 'Euler Adelante', 'Euler Atrás', 'Euler Modificado'] # Creo un arreglo con los metodos de solucion
         self.diccionario_metodos = {}
 
         for metodo in metodos_sol: # Itero sobre todos los metodos de solucion
@@ -134,8 +147,10 @@ class Interfaz:
         vals_predefinidos = ["Regular spiking","Intrinsic bursting","Chattering","Fast spiking","Talamo-cortical","Resonador"]
         self.valorPredefinido = StringVar(self.frame_opciones)
         self.valorPredefinido.set(vals_predefinidos[0]) # Valor por default
-        self.comboValorPredefinido = OptionMenu(self.frame_opciones, self.valorPredefinido, *vals_predefinidos)
+        self.comboValorPredefinido = OptionMenu(self.frame_opciones, self.valorPredefinido, *vals_predefinidos, command=self.actualizar)
         self.comboValorPredefinido.grid(row=2, column=3)
+        # Poner como valores predefinidos los de las constantes
+        self.actualizar(self.valorPredefinido)
 
         # --- EMPACAR EL PANEL ---
         self.panel_izquierda.pack(side=LEFT,fill=Y) # Empaco el panel
@@ -194,12 +209,49 @@ class Interfaz:
         self.frame_cargar.place(x=0,y=280)
         self.boton_cargar = Button(self.frame_cargar, text="Cargar", command=self.cargar_variables)
         self.boton_cargar.place(x=500, y=0)
+        self.boton_limpiar = Button(master=self.frame_cargar, text="Limpiar gráfica",  command = self.limpiar_grafica)
+        self.boton_limpiar.place(x=350, y=0)
+
+
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
-
-
+        # Mensaje de bienvenida
+        messagebox.showinfo('¡Bienvenido!','Este proyecto, de la clase IBIO 2240, pretende modelar la actividad neuronal')
 
     # ======================================= FUNCIONES DE APOYO ===========================================
+    """Funcion que actualiza los parametros de a,b,c,d basado en la neurona elegida"""
+    def actualizar(self, eleccion):
+        if eleccion == "Regular spiking":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(4)
+        elif eleccion == "Intrinsic bursting":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-55)
+            self.dict_parametros_valores['d'].set(4)
+        elif eleccion == "Chattering":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-50)
+            self.dict_parametros_valores['d'].set(2)
+        elif eleccion == "Fast spiking":
+            self.dict_parametros_valores['a'].set(0.1)
+            self.dict_parametros_valores['b'].set(0.2)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(2)
+        elif eleccion == "Talamo-Cortical":
+            self.dict_parametros_valores['a'].set(0.02)
+            self.dict_parametros_valores['b'].set(0.25)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(0.05)
+        else:
+            self.dict_parametros_valores['a'].set(0.1)
+            self.dict_parametros_valores['b'].set(0.25)
+            self.dict_parametros_valores['c'].set(-65)
+            self.dict_parametros_valores['d'].set(0.05)
+
     ''' Funcion que es llamada al hacer click en el boton cerrar, pregunta si realmente se desea cerrar o retornar a la aplicacion
         '''
     def cerrar_aplicacion(self):
@@ -219,7 +271,9 @@ class Interfaz:
     def exportar(self):
         ahora = time() # obtengo el timestamp actual
         fecha = dt.datetime.utcfromtimestamp(ahora).strftime("%Y-%m-%d_%H-%M-%S") # genero la fecha actual con el time stamp obtenido previamente
-        nombre_carpeta = 'Datos_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+        nombre_carpeta_v = 'Datos_V_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+        nombre_carpeta_u = 'Datos_U_' + fecha # contruyo el nombre de la carpeta donde se guardaran los archivos con el nombre Datos_Fecha
+
         # pido el directorio donde se creara la carpeta en la que se guardaran los datos
         nombre_directorio = filedialog.askdirectory(parent = self.window,initialdir=self.directorio_actual,title="Directorio de guardado de datos") 
         # si el directorio es vacio quiere decir que se cerro la ventana sin escojer por lo que la funcion no hara nada y se retorna
@@ -228,10 +282,44 @@ class Interfaz:
         # si hay algo en el directorio se procede a crear una clase path con el parametro obtenido en el dialog para asi manejar de manera mas simple el path
         directorio_datos = Path(nombre_directorio)
         # se crea el path a la carpeta nueva con el nombre previamente generaro y se manda el comando al sistema para que la cree como carpeta
-        carpetaDatos = directorio_datos.joinpath(str(nombre_carpeta))
-        carpetaDatos.mkdir(parents=True, exist_ok=True)
-        # TODO: Guardar los datos generados. Todavia no se realiza pues la interfaz es un esqueleto.
-        # Se realizara en una funcion auxiliar. 
+        carpeta_datos_v = directorio_datos.joinpath(str(nombre_carpeta_v))
+        carpeta_datos_v.mkdir(parents=True, exist_ok=True)
+        carpeta_datos_u = directorio_datos.joinpath(str(nombre_carpeta_u))
+        carpeta_datos_u.mkdir(parents=True, exist_ok=True)
+        # Se realizara en una funcion auxiliar el almacenado de datos de las graficas:
+        if self.diccionario_todos['V(t)']:
+            self.aux_exportar_metodo(carpeta_datos_v, '.efor_v', self.eForSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.eback_v', self.eBackSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.emod_v', self.eModSetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.rk2_v', self.RK2SetV)
+            self.aux_exportar_metodo(carpeta_datos_v, '.rk4_v', self.RK4SetV)
+        if self.diccionario_todos['u(t)']:
+            self.aux_exportar_metodo(carpeta_datos_u, '.efor_u', self.eForSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.eback_u', self.eBackSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.emod_u', self.eModSetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.rk2_u', self.RK2SetU)
+            self.aux_exportar_metodo(carpeta_datos_u, '.rk4_u', self.RK4SetU)
+
+
+    def aux_exportar_metodo(self, directorio, extension, listaDatos):
+        ''' Metodo auxiliar que ayudara al guardado de archivos, es definido para evitar redundacia en codigo
+        '''         
+        # genero un proceso iterativo para leer todas las lineas graficadas en el listado de datos el cual tiene en cada posicion un conjunto (X,Y)
+        for i,val in enumerate(listaDatos):
+            # obtengo el listado de datos de X 
+            x_data = val[0]
+            # obtengo el listado de datos deY
+            y_data = val[1]
+            # las empaqueto en formatodouble
+            x_packed = st.pack('d'*len(x_data),*x_data)
+            y_packed = st.pack('d'*len(y_data),*y_data)
+            # creo el archivo con el nombre i.extencion para hacer la lectura despues de forma facil ejemplo 0.efor
+            with open(directorio.joinpath(str(i)+extension).absolute(),'ab') as f:
+                # escribo los datos de X en el archivo
+                f.write(x_packed)
+                # escribo los datos de Y en el archivo
+                f.write(y_packed)
+                # Nota: el orden es importante ya que en la lectura se obtendra un set completo por lo que la primera mitad sera X y la segunda mitad sera Y
     
 
     ''' Funcion que abre un dialogo para seleccionar un archivo del cual se cargaran los datos de una ejecucion previa en formato double
@@ -245,7 +333,82 @@ class Interfaz:
         # si hay algo en el directorio se procede a crear una clase path con el parametro obtenido en el dialog para asi manejar de manera mas simple el path
         directorio_datos = Path(nombre_directorio)
         # se llama a la funcion auxiliar que lee los archivos con la extencion y añade los datos a la grafica
-        # TODO: Llamar a la funcion auxiliar para cargar los datos cuando ya los haya. La interfaz es un esqueleto entonces todavia no funciona.
+        tmpSetEforV = self.aux_importar(directorio_datos,'.efor_v', self.color_efor)
+        tmpSetEbackV = self.aux_importar(directorio_datos,'.eback_v', self.color_eback)
+        tmpSetEmodV = self.aux_importar(directorio_datos,'.emod_v', self.color_emod)
+        tmpSetRK2V = self.aux_importar(directorio_datos,'.rk2_v', self.color_rk2)
+        tmpSetRK4V = self.aux_importar(directorio_datos,'.rk4_v',self.color_rk4)
+
+        tmpSetEforU = self.aux_importar(directorio_datos,'.efor_u', self.color_efor)
+        tmpSetEbackU = self.aux_importar(directorio_datos,'.eback_u', self.color_eback)
+        tmpSetEmodU = self.aux_importar(directorio_datos,'.emod_u', self.color_emod)
+        tmpSetRK2U = self.aux_importar(directorio_datos,'.rk2_u', self.color_rk2)
+        tmpSetRK4U = self.aux_importar(directorio_datos,'.rk4_u',self.color_rk4)
+        # agrego los datos cargados a los existentes en las listas que almacenan estos para la persistencia
+        self.eForSetV +=tmpSetEforV
+        self.eBackSetV+=tmpSetEbackV
+        self.eModSetV+=tmpSetEmodV
+        self.RK2SetV+=tmpSetRK2V
+        self.RK4SetV+=tmpSetRK4V
+
+        self.eForSetU +=tmpSetEforU
+        self.eBackSetU+=tmpSetEbackU
+        self.eModSetU+=tmpSetEmodU
+        self.RK2SetU+=tmpSetRK2U
+        self.RK4SetU+=tmpSetRK4U
+        # Dibujo en la grafica
+        self.imagen_grafica.draw()
+
+    def aux_importar(self, directorio, extension, color_grafica):
+        ''' Metodo auxiliar que ayudara a la carga de archivos, es definido para evitar redundacia en codigo
+        retorna una lista con los valores leidos de X y Y de los archivos que encuentre en el path especificado con la extencion especificada
+        '''
+        # obtengo el nombre de todos los archivos con la extension deseada
+        ext = '*'+extension
+        files = [f.absolute() for f in directorio.glob(ext) if f.is_file()]
+        tmpSet = [] # variable donde se guardaran los conjuntos
+        # proceso iterativo que lee cada archivo
+        for tmpF in files:
+            with open(tmpF,'rb') as f:
+                # leo el contenido del archivo
+                data = f.read()
+                # desempaqueto el contenido del arvhivo y lo convierto en lista para manipularlo
+                unpacked = list(st.unpack('d'*(len(data)//8),data))
+                # obtengo la mitad del tamaño para poder partir el array
+                tam = len(unpacked)//2
+                # genero los valores de X con la mitad de los datos y lo vuelvo un array de numpy
+                t = np.array(unpacked[:tam])
+                # genero los valores de Y con la segunda mitad de los datos y lo vuelvo un array de numpy
+                V = np.array(unpacked[tam:])
+                # grafico la linea con el color que debe ir
+                self.plot.plot(t,V,color=color_grafica)
+                # guardo los valore de X y Y en la lista temporal que se retornara al final de este metodo
+                tmpSet.append((t,V))
+        # retorno la lista resultante de la lectura de los archivos con la extencion
+        return tmpSet
+
+    def limpiar_grafica(self):
+        ''' Funcion que limpia las grafica y las listas donde se guardan los datos para los metodos de persistencia
+        '''
+        self.plot.cla() # lipio toda la grafica, esto elimina incluso los titulos por lo que debo volver a ponerlos despues de esto                                                        # Define que las fuentes usadas en el gráfico son serifadas.
+        self.plot.set_xlabel(r'Tiempo (ms)')       # Título del eje x
+        self.plot.set_ylabel(r'Voltaje (mV)')        # Título del eje y
+        self.plot.grid(1) # Activo la grilla
+        self.imagen_grafica.draw()                                                              # Una vez agregado todo dibujo la grafica en la interfaz
+        # vuelvo a poner el valor vacio en las listas que guardan los datos para los metodos de persistencia
+        self.eForSetV = []
+        self.eBackSetV = []
+        self.eModSetV = []
+        self.RK2SetV = []
+        self.RK4SetV = []
+        self.scipySetV = []
+
+        self.eForSetU = []
+        self.eBackSetU = []
+        self.eModSetU = []
+        self.RK2SetU = []
+        self.RK4SetU = []
+        self.scipySetU = []
 
     '''Funcion que carga las variables que actualmente tiene el usuario en la interfaz y muestra una tabla con ello'''
     def cargar_variables(self):
@@ -274,9 +437,9 @@ class Interfaz:
         # Primero, obtengo los parametros de tiempo (inic) y corriente
         self.t_ini_est, self.t_fini_est, self.t_final = self.diccionario_todos['Tiempo de inicio estimulación'], self.diccionario_todos['Tiempo de fin estimulación'], self.diccionario_todos['Tiempo de simulación']
         self.I = self.diccionario_todos['corriente'] # Obtengo el valor de la corriente
-        self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 1) # Obtengo el tiempo de estimulacion
-        self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 1) # Obtengo el tiempo antes de la estimulacion
-        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final, 1) # Obtengo el tiempo despues de la estimulacion
+        self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 0.01) # Obtengo el tiempo de estimulacion
+        self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 0.01) # Obtengo el tiempo antes de la estimulacion
+        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final + 0.01, 0.01) # Obtengo el tiempo despues de la estimulacion
         normal = 0 # Indica si la estimulacion es en el rango de tiempo dado, no al inicio ni al final
         if 0 < self.t_ini_est < self.t_final and 0 < self.t_fini_est < self.t_final: # Si el tiempo de inicio y fin de la estimulacion esta en el rango
             I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) + [0]*len(self.t_despues_estimulacion)   # Se ve como una funcion escalon
@@ -290,7 +453,7 @@ class Interfaz:
             I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) # Empieza no estimulada, termina estimulada
             normal = 2 # La estimulacion es al final
         else: # En el caso por defecto, asumo que no se quiere estimulacion sobre la neurona
-            I_t = [0]*len(np.arange(0, self.t_final, 1)) # Dejo la corriente en 0
+            I_t = [0]*len(np.arange(0, self.t_final, 0.01)) # Dejo la corriente en 0
         self.diccionario_todos['I_t'] = I_t # Almaceno mi arreglo de corriente 
         # Crear la tablita con los datos ingresados
         total_filas = 3 if normal else 2 # Numero de filas
@@ -307,23 +470,7 @@ class Interfaz:
         self.tabla.heading('T inicial (ms)',text='T inicial (ms)', anchor=CENTER)
         self.tabla.heading('T final (ms)',text='T final (ms)', anchor=CENTER)
         self.tabla.heading('Estimulación (mA)',text='Estimulación (mA)', anchor=CENTER)
-        """
-        self.e = Text(self.frame_cargar, width=20, bg='gray', fg='white', font=('Montserrat',18))    # Vacia para dar espacio   
-        self.e.grid(row=0, column=0)
-        # Aqui empiezan las labels
-        self.e = Text(self.frame_cargar, width=20, bg='gray', fg='white', font=('Montserrat',14))        
-        self.e.grid(row=1, column=0)
-        self.e.insert(END, 'T inicial (ms)') # Primero, tiempo inicial
 
-        self.e = Text(self.frame_cargar, width=20, bg='gray', fg='white', font=('Montserrat',14))        
-        self.e.grid(row=1, column=1)
-        self.e.insert(END, 'T final (ms)') # Luego, tiempo final
-
-        self.e = Text(self.frame_cargar, width=20, bg='gray', fg='white', font=('Montserrat',14))        
-        self.e.grid(row=1, column=2)
-        self.e.insert(END, 'Estimulación (mA)') # Por ultimo, estimulacion
-        color_oscuro = True # Para intercalar colores
-        """
         # Ahora, verifico si es normal la estimulacion o no y con ello, pongo los cuadritos de la tabla e inserto las filas
         if normal == 0: # La estimulacion ocurre en el rango dado, no al inicio ni al final
             self.tabla.insert(parent='',index='end',iid=0,text='',values=(0, self.t_ini_est, 0))
@@ -338,14 +485,121 @@ class Interfaz:
         else: # La estimulacion dura toda la simulacion
             self.tabla.insert(parent='',index='end',iid=7,text='',values=(self.t_ini_est, self.t_final, self.I))
         self.tabla.place(x=100, y=80)
-        print(self.diccionario_todos)
-
+        self.metodoSolucion()
         return self.diccionario_todos
+
+    """Metodo que se encarga de mostrar las graficas de las checkboxes de metodos seleccionadas"""
+    def metodoSolucion(self):
+        if self.diccionario_todos['Euler Adelante']:
+            self.llamadoEulerFor()
+        if self.diccionario_todos['Euler Atrás']:
+            self.llamadoEulerBack()
+        if self.diccionario_todos['Euler Modificado']:
+            self.llamadoEulerModificado()
+        if self.diccionario_todos['Runge-Kutta 2']:
+            self.llamadoRungeKutta2()
+        if self.diccionario_todos['Runge-Kutta 4']:
+            self.llamadoRungeKutta4()
+            
+
+    def llamadoEulerFor(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler forward con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = EulerFor(a, b, c, d, T0, TF, I)
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_efor)
+            # Lo agrego para persistir
+            self.eForSetV.append((t_eFor,V_eFor))
+        if self.diccionario_todos['u(t)']: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_efor)
+            self.eForSetU.append((t_eFor,U_eFor))
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+    
+    def llamadoEulerBack(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler back con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = Eulerback(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_eback)
+            self.eBackSetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_eback)
+            self.eBackSetU.append((t_eFor, V_eFor))
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoEulerModificado(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler modificado con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = Eulermod(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_emod)
+            self.eModSetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_emod)
+            self.eModSetU.append((t_eFor, V_eFor))
+
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoRungeKutta2(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo Runge-Kutta 2 con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = rungekutta2(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_rk2)
+            self.RK2SetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_rk2)
+            self.RK2SetU.append((t_eFor, U_eFor))
+
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
+
+    def llamadoRungeKutta4(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo Runge-Kutta 4 con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = rungekutta4(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_rk4)
+            self.RK4SetV.append((t_eFor, V_eFor))
+        if self.diccionario_todos['u(t)']: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_rk4)
+            self.RK4SetU.append((t_eFor, V_eFor))
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
 
     def iniciar(self):
         ''' Metodo que inicia la interfaz con el main loop, este metodo se define por tener orden en toda la clase y no hacer accesos externos al parametro de ventana
         '''
         self.window.mainloop()
+
 
 
 """Esta funcion retorna las dimensiones de la pantalla para centrar la ventana """
@@ -375,6 +629,7 @@ if __name__ == '__main__':
     window.geometry("+{}+{}".format(posicion_derecha-500, posicion_abajo-250)) # Centro la ventana
     app = Interfaz(window) # Genero el objeto interfaz
     app.iniciar() # Corro la interfaz
+    
     
 
 
