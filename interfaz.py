@@ -5,6 +5,7 @@ from pathlib import Path
 from matplotlib.backend_bases import key_press_handler
 from tkinter import *               # wild card import para evitar llamar tk cada vez
 from  tkinter import ttk
+from logica import *
 
 from tkinter import filedialog      # elegir archivos
 from tkinter import messagebox      # mensaje de cerrar
@@ -36,6 +37,14 @@ class Interfaz:
         self.RK2Set = []
         self.RK4Set = []
         self.scipySet = []
+        # Colores definidos para las graficas
+        self.color_efor = 'red'
+        self.color_eback = '#fbb901'
+        self.color_emod = 'darkgreen'
+        self.color_rk2 = 'blue'
+        self.color_rk4 = 'purple'
+        self.color_scipy = 'black'
+
         # ======================================= PANEL SUPERIOR ===========================================
         self.panel_superior = Frame(self.window)
         titulo = Label(self.panel_superior, text="Modelo neuronal de Izhikevich") # Creo un label con el titulo.
@@ -197,8 +206,6 @@ class Interfaz:
         # --- EMPACAR EL PANEL ---
         self.panel_derecha.pack(side=RIGHT,fill=Y) # Empaco el panel
 
-
-
     # ======================================= FUNCIONES DE APOYO ===========================================
     ''' Funcion que es llamada al hacer click en el boton cerrar, pregunta si realmente se desea cerrar o retornar a la aplicacion
         '''
@@ -274,9 +281,9 @@ class Interfaz:
         # Primero, obtengo los parametros de tiempo (inic) y corriente
         self.t_ini_est, self.t_fini_est, self.t_final = self.diccionario_todos['Tiempo de inicio estimulación'], self.diccionario_todos['Tiempo de fin estimulación'], self.diccionario_todos['Tiempo de simulación']
         self.I = self.diccionario_todos['corriente'] # Obtengo el valor de la corriente
-        self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 1) # Obtengo el tiempo de estimulacion
-        self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 1) # Obtengo el tiempo antes de la estimulacion
-        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final, 1) # Obtengo el tiempo despues de la estimulacion
+        self.t_estimulacion = np.arange(self.t_ini_est, self.t_fini_est, 0.01) # Obtengo el tiempo de estimulacion
+        self.t_antes_estimulacion = np.arange(0, self.t_ini_est, 0.01) # Obtengo el tiempo antes de la estimulacion
+        self.t_despues_estimulacion = np.arange(self.t_fini_est, self.t_final, 0.01) # Obtengo el tiempo despues de la estimulacion
         normal = 0 # Indica si la estimulacion es en el rango de tiempo dado, no al inicio ni al final
         if 0 < self.t_ini_est < self.t_final and 0 < self.t_fini_est < self.t_final: # Si el tiempo de inicio y fin de la estimulacion esta en el rango
             I_t = [0]*len(self.t_antes_estimulacion) + [self.I]*len(self.t_estimulacion) + [0]*len(self.t_despues_estimulacion)   # Se ve como una funcion escalon
@@ -322,9 +329,29 @@ class Interfaz:
         else: # La estimulacion dura toda la simulacion
             self.tabla.insert(parent='',index='end',iid=7,text='',values=(self.t_ini_est, self.t_final, self.I))
         self.tabla.place(x=100, y=80)
-        print(self.diccionario_todos)
-
+        self.metodoSolucion()
         return self.diccionario_todos
+
+    def metodoSolucion(self):
+        if self.diccionario_todos['Euler Adelante']:
+            self.llamadoEulerFor()
+
+    def llamadoEulerFor(self):
+        ''' Metodo que llamara la funcion definida en la logica para el metodo euler forward con los parametros que tenga la interfaz en este momento
+        '''
+        # llamo la funcion de la logica para el metodo y obtengo los valores de x y y a graficar
+        a, b, c, d = self.diccionario_todos['a'], self.diccionario_todos['b'], self.diccionario_todos['c'], self.diccionario_todos['d'] 
+        T0, TF, I = 0, self.diccionario_todos['Tiempo de simulación'], self.diccionario_todos['I_t']
+        t_eFor, V_eFor, U_eFor = EulerFor(a, b, c, d, T0, TF, I)
+        # agregro los valores como una tupla en la variable que guarda las ejecuciones para los metodos de persistencia
+        # TODO: self.eForSet.append((t_eFor,V_eFor))
+        # grafico los puntos con el respectivo color asignado para el metodo, variable que se puede cambiar en el init
+        if self.diccionario_todos['V(t)']:
+            self.plot.plot(t_eFor, V_eFor,color=self.color_efor)
+        else: 
+            self.plot.plot(t_eFor, U_eFor,color=self.color_efor)
+        # una vez se añade todo al plot procedo a mostrarlo en la interfaz con el metodo draw del canvas definido para la grafica
+        self.imagen_grafica.draw()
 
 
 
